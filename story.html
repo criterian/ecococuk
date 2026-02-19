@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deniz ve Yeşil Pelerinli Kahraman</title>
+    <style>
+        /* GENEL TASARIM */
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            background-color: #e0f7fa;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-container {
+            background-color: white;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 20px;
+            text-align: center;
+            border: 5px solid #4caf50;
+            position: relative;
+        }
+
+        /* GÖRSEL ALANI */
+        #image-frame {
+            width: 100%;
+            height: 400px;
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #story-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.5s;
+        }
+
+        /* METİN ALANI */
+        #text-area {
+            font-size: 1.5rem;
+            color: #333;
+            min-height: 120px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* BUTONLAR */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s;
+            box-shadow: 0 5px #999;
+        }
+
+        button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px #999;
+        }
+
+        .btn-nav { background-color: #ff9800; color: white; }
+        .btn-read { background-color: #2196f3; color: white; font-weight: bold; }
+        .btn-game { background-color: #e91e63; color: white; font-weight: bold; font-size: 1.5rem; display: none; }
+        .btn-disabled { background-color: #ccc; cursor: not-allowed; box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <h2 style="color: #2e7d32;">Deniz ve Yeşil Pelerinli Kahraman</h2>
+    
+    <div id="image-frame">
+        <img id="story-image" src="images/cover.png" alt="Hikaye Resmi">
+    </div>
+
+    <div id="text-area">
+        Hikaye yükleniyor...
+    </div>
+
+    <audio id="story-audio"></audio>
+
+    <div class="controls">
+        <button id="prevBtn" class="btn-nav" onclick="changeSlide(-1)">⬅️ Geri</button>
+        <button id="replayBtn" class="btn-read" onclick="playAudio()">🔊 Sesi Dinle</button>
+        <button id="nextBtn" class="btn-nav" onclick="changeSlide(1)">İleri ➡️</button>
+    </div>
+    
+    <div class="controls" style="margin-top: 15px;">
+        <button id="gameBtn" class="btn-game" onclick="window.location.href='oyun1.html'">🎮 Oyun Oyna!</button>
+    </div>
+</div>
+
+<script>
+    // --- HİKAYE VERİSİ ---
+    // Resimler "images/" klasöründen (cover.png, page1.png, page2.png...)
+    // Sesler "sounds/" klasöründen (1.mp3, 2.mp3...) çağırılacak şekilde güncellendi.
+    const storyData = [
+        { text: "Güneşli bir sabahtı. Minik Deniz, penceresini açtı ve derin bir nefes aldı. 'Ohhh! Mis gibi çiçek kokuyor!' dedi. Deniz doğayı çok seviyordu.", img: "images/cover.png", audio: "sounds/1.mp3" },
+        { text: "Bahçeye koştuğunda omzuna minik bir yaprak kondu. Bu yaprağın gözleri vardı! 'Merhaba Deniz! Ben Yaprak. Bugün doğanın kahramanı olur musun?' dedi.", img: "images/page1.png", audio: "sounds/2.mp3" },
+        { text: "Birlikte yürürken üzgün bir çiçek gördüler. Yaprak, 'Bak Deniz, bu çiçek çok susamış. Güneş çok sıcak olduğu için suyu bitmiş,' dedi.", img: "images/page2.png", audio: "sounds/3.mp3" },
+        { text: "Deniz hemen sulama kabını aldı. Suyu boşa harcamadan, dikkatlice çiçeğe döktü. 'Suyu korumalıyız, o doğanın bize hediyesi,' dedi.", img: "images/page3.png", audio: "sounds/4.mp3" },
+        { text: "Çiçek canlandı! Ama o da ne? Çimlerin üzerinde kötü görünen bir plastik şişe duruyordu. Bu şişe doğaya ait değildi.", img: "images/page4.png", audio: "sounds/5.mp3" },
+        { text: "Deniz hemen koştu, şişeyi aldı ve doğruca mavi geri dönüşüm kutusuna attı. Doğa artık tertemizdi!", img: "images/page5.png", audio: "sounds/6.mp3" },
+        { text: "Harikasın Deniz! Doğayı sevmek ve onu korumak, dünyanın en güzel kahramanlığıdır. Şimdi sen de kahraman olmak ister misin?", img: "images/page6.png", audio: "sounds/7.mp3" }
+    ];
+
+    let currentSlide = 0;
+    const textArea = document.getElementById("text-area");
+    const imageArea = document.getElementById("story-image");
+    const audioElement = document.getElementById("story-audio");
+    const gameBtn = document.getElementById("gameBtn");
+
+    // Ekranı Güncelleme
+    function updateSlide() {
+        const data = storyData[currentSlide];
+        
+        // Metni, Resmi ve Sesi Güncelle
+        textArea.innerText = data.text;
+        imageArea.src = data.img;
+        audioElement.src = data.audio;
+
+        // Otomatik Sesi Çal
+        playAudio();
+
+        // Buton durumlarını ayarla
+        document.getElementById("prevBtn").classList.toggle("btn-disabled", currentSlide === 0);
+        document.getElementById("nextBtn").classList.toggle("btn-disabled", currentSlide === storyData.length - 1);
+
+        // Son sayfaya gelindiğinde "Oyun Oyna" butonunu göster
+        if (currentSlide === storyData.length - 1) {
+            gameBtn.style.display = "inline-block";
+        } else {
+            gameBtn.style.display = "none";
+        }
+    }
+
+    // Slayt Değiştirme
+    function changeSlide(direction) {
+        currentSlide += direction;
+
+        // Sınırları kontrol et
+        if (currentSlide < 0) currentSlide = 0;
+        if (currentSlide >= storyData.length) currentSlide = storyData.length - 1;
+
+        updateSlide();
+    }
+
+    // Sesi Oynatma Fonksiyonu
+    function playAudio() {
+        audioElement.currentTime = 0; // Başa sar
+        let playPromise = audioElement.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.log("Tarayıcı otomatik oynatmayı engelledi. Kullanıcının 'Sesi Dinle' butonuna basması gerekiyor.");
+            });
+        }
+    }
+
+    // Sayfa ilk yüklendiğinde hikayeyi başlat
+    window.onload = () => {
+        updateSlide();
+    };
+</script>
+
+</body>
+</html>

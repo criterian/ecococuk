@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doğru Kutuyu Seç!</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            background-color: #e0f7fa;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #header {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #00796b;
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        #score-board {
+            font-size: 1.5rem;
+            color: #ff5722;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Ortadaki Atık Gösterim Alanı */
+        #display-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        #current-trash {
+            font-size: 120px; /* Çocuklar için çok büyük ve net */
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2));
+        }
+
+        /* Animasyonlar */
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-20px) rotate(-10deg); }
+            75% { transform: translateX(20px) rotate(10deg); }
+        }
+
+        @keyframes spinOut {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        .anim-pop { animation: popIn 0.5s ease-out forwards; }
+        .anim-shake { animation: shake 0.4s ease-in-out; }
+        .anim-spin { animation: spinOut 0.5s ease-in forwards; }
+
+        /* Çöp Kutuları (Sadece Tıklanacak) */
+        #bins-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            padding: 20px;
+            background-color: #ffffff;
+            border-top: 5px solid #b2dfdb;
+            box-sizing: border-box;
+        }
+
+        .bin-btn {
+            flex: 1;
+            max-width: 150px;
+            height: 120px;
+            border-radius: 20px;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.2);
+            transition: transform 0.1s, box-shadow 0.1s;
+            font-family: inherit;
+        }
+
+        .bin-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 rgba(0,0,0,0.2);
+        }
+
+        .bin-btn span { font-size: 40px; margin-bottom: 5px; }
+
+        #btn-kagit { background-color: #42a5f5; box-shadow: 0 8px 0 #1e88e5; }
+        #btn-plastik { background-color: #ffca28; color: #333; box-shadow: 0 8px 0 #ffb300; }
+        #btn-cam { background-color: #66bb6a; box-shadow: 0 8px 0 #43a047; }
+
+        /* Bitiş Ekranı */
+        #win-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(255,255,255,0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #win-screen h2 { color: #2e7d32; font-size: 3rem; margin: 0; text-align: center;}
+        
+        .restart-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #e64a19;
+            font-family: inherit;
+        }
+        .restart-btn:active { transform: translateY(5px); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <h1>Çöp Nereye Gider?</h1>
+        <div id="score-board">Puan: <span id="score">0</span></div>
+    </div>
+
+    <div id="display-area">
+        <div id="current-trash" class="anim-pop">🥤</div>
+    </div>
+
+    <div id="bins-container">
+        <button class="bin-btn" id="btn-kagit" onclick="checkAnswer('kagit')">
+            <span>📦</span>Kağıt
+        </button>
+        <button class="bin-btn" id="btn-plastik" onclick="checkAnswer('plastik')">
+            <span>🥤</span>Plastik
+        </button>
+        <button class="bin-btn" id="btn-cam" onclick="checkAnswer('cam')">
+            <span>🫙</span>Cam
+        </button>
+    </div>
+
+    <div id="win-screen">
+        <h2>🎉 Görev Tamam! 🎉</h2>
+        <p style="font-size: 1.5rem; color: #555; text-align:center;">Doğayı koruduğun için teşekkürler<br>Küçük Ekobirey!</p>
+        <button class="restart-btn" onclick="location.reload()">Tekrar Oyna</button>
+    </div>
+
+    <script>
+        // Atık Listesi (İstenildiği kadar çoğaltılabilir)
+        const trashes = [
+            { icon: '📦', type: 'kagit' },
+            { icon: '📰', type: 'kagit' },
+            { icon: '🥤', type: 'plastik' },
+            { icon: '🧴', type: 'plastik' },
+            { icon: '🍾', type: 'cam' },
+            { icon: '🫙', type: 'cam' }
+        ];
+
+        // Listeyi karıştır
+        trashes.sort(() => Math.random() - 0.5);
+
+        let currentIndex = 0;
+        let score = 0;
+        const trashElement = document.getElementById('current-trash');
+        const scoreElement = document.getElementById('score');
+        const winScreen = document.getElementById('win-screen');
+
+        // İlk atığı göster
+        function loadTrash() {
+            if (currentIndex < trashes.length) {
+                trashElement.innerText = trashes[currentIndex].icon;
+                trashElement.className = 'anim-pop'; // Giriş animasyonu
+            } else {
+                showWinScreen();
+            }
+        }
+
+        // Tıklanan kutuyu kontrol et
+        function checkAnswer(selectedType) {
+            const correctType = trashes[currentIndex].type;
+
+            if (selectedType === correctType) {
+                // DOĞRU!
+                score += 10;
+                scoreElement.innerText = score;
+                
+                // Başarı animasyonu (Dönerek kaybolma)
+                trashElement.className = 'anim-spin';
+                
+                // Animasyon bitince yenisini getir
+                setTimeout(() => {
+                    currentIndex++;
+                    loadTrash();
+                }, 500);
+
+            } else {
+                // YANLIŞ!
+                // Hata animasyonu (Sallanma)
+                trashElement.className = ''; // Önce class'ı temizle
+                void trashElement.offsetWidth; // Tarayıcıyı yeniden çizmeye zorla (reflow)
+                trashElement.className = 'anim-shake';
+            }
+        }
+
+        function showWinScreen() {
+            winScreen.style.display = 'flex';
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const colors = ['#f44336', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+            for (let i = 0; i < 60; i++) {
+                let confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = '15px';
+                confetti.style.height = '15px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '-20px';
+                confetti.style.zIndex = '101';
+                confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
+                document.body.appendChild(confetti);
+            }
+        }
+
+        // Konfeti CSS animasyonunu dinamik ekle
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes fall { to { transform: translateY(100vh) rotate(720deg); } }`;
+        document.head.appendChild(style);
+
+        // Oyunu başlat
+        loadTrash();
+    </script>
+</body>
+</html>
