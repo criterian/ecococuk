@@ -6,15 +6,18 @@
     <title>Doğru Kutuyu Seç!</title>
     <style>
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+       font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             background-color: #e0f7fa;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
+            /* height: 100vh; yerine min-height kullanıyoruz */
+            min-height: 100vh; 
+            /* overflow: hidden; yerine auto yapıyoruz */
+            overflow-y: auto; 
             touch-action: manipulation;
+            padding-bottom: 30px; /* Alt kısımda biraz boşluk bırakalım */
         }
 
         #header {
