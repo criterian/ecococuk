@@ -7,14 +7,17 @@
     <style>
         /* GENEL TASARIM */
         body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+           font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
             background-color: #e0f7fa;
             margin: 0;
+            /* overflow: hidden; satırını siliyoruz veya auto yapıyoruz */
+            overflow-y: auto; 
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
+            padding: 20px; /* Kaydırırken kenarlarda boşluk kalması için */
+            box-sizing: border-box;
         }
 
         #app-container {
